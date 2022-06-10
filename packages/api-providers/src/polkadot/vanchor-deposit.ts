@@ -3,11 +3,12 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+import '@webb-tools/types';
 import '@webb-tools/api-derive/index.js';
 
 import type { WebbPolkadot } from './webb-provider';
 
-import { createUtxoBn254CT2, getCachedFixtureURI, withLocalFixtures } from '@webb-dapp/api-providers/utils';
+import { getCachedFixtureURI, withLocalFixtures } from '@webb-dapp/api-providers/utils';
 import { LoggerService } from '@webb-tools/app-util';
 import {
   ArkworksProvingManager,
@@ -15,7 +16,8 @@ import {
   NoteGenInput,
   ProofInterface,
   ProvingManagerSetupInput,
-  WasmUtxo,
+  Utxo,
+  VAnchorProof,
 } from '@webb-tools/sdk-core';
 import { BigNumber } from 'ethers';
 
@@ -167,7 +169,7 @@ export class PolkadotVAnchorDeposit extends VAnchorDeposit<WebbPolkadot, Deposit
     return indexBeforeInsertion + shiftedIndex;
   }
 
-  async deposit(depositPayload: DepositPayload, recipient: string): Promise<void> {
+  async deposit(depositPayload: DepositPayload): Promise<void> {
     // Getting the  active account
     const account = await this.inner.accounts.activeOrDefault;
     const secret = randomAsU8a();
@@ -187,10 +189,15 @@ export class PolkadotVAnchorDeposit extends VAnchorDeposit<WebbPolkadot, Deposit
     const targetChainId = note.targetChainId;
 
     // output
-    const output1 = note.getUtxo();
-    const output2 = await WasmUtxo.new('Bn254', 'Arkworks', 2, 2, '0', targetChainId, undefined);
+    const output1 = new Utxo(note.getUtxo());
+    const output2 = await Utxo.generateUtxo({
+      curve: 'Bn254',
+      backend: 'Arkworks',
+      amount: '0',
+      chainId: targetChainId,
+    });
     let publicAmount = note.amount;
-    const inputNote = note.defaultUtxoNote();
+    const inputNote = Note.fromDepositNote(note.defaultUtxoNote());
 
     const leavesMap: any = {};
     leavesMap[targetChainId] = [];
@@ -225,35 +232,14 @@ export class PolkadotVAnchorDeposit extends VAnchorDeposit<WebbPolkadot, Deposit
       roots: rootsSet,
       chainId: note.targetChainId,
       indices: [0],
-      inputNotes: [inputNote.serialize()],
+      inputNotes: [inputNote],
       publicAmount,
-      outputParams: [
-        {
-          amount: output1.amountRaw,
-          backend: 'Arkworks',
-          curve: 'Bn254',
-          blinding: hexToU8a(`0x${output1.blinding}`),
-          chainId: String(output1.chainIdRaw),
-          anchorSize: 2,
-          inputSize: 2,
-          privateKey: hexToU8a(`0x${output1.secret_key}`),
-        },
-        {
-          amount: output2.amountRaw,
-          backend: 'Arkworks',
-          curve: 'Bn254',
-          blinding: hexToU8a(`0x${output2.blinding}`),
-          chainId: String(output2.chainIdRaw),
-          anchorSize: 2,
-          inputSize: 2,
-          privateKey: hexToU8a(`0x${output2.secret_key}`),
-        },
-      ],
+      output: [output1, output2],
     };
 
     const worker = this.inner.wasmFactory('wasm-utils');
     const pm = new ArkworksProvingManager(worker);
-    const data = await pm.prove('vanchor', vanchorDepositSetup);
+    const data = (await pm.prove('vanchor', vanchorDepositSetup)) as VAnchorProof;
     const vanchorProofData = {
       proof: `0x${data.proof}`,
       publicAmount: data.publicAmount,
