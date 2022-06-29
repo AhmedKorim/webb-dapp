@@ -286,7 +286,9 @@ export type RelayerSubstrateCommands = {
  **/
 export type RelayerEVMCommands = {
   anchor: AnchorRelayTransaction;
+  vanchor: VAnchorRelayTransaction;
 };
-export type EVMCMDKeys = keyof RelayerEVMCommands;
-export type SubstrateCMDKeys = keyof RelayerSubstrateCommands;
+
+export type EVMCMDKeys = `${keyof RelayerEVMCommands}RelayTx`;
+export type SubstrateCMDKeys = `${keyof RelayerSubstrateCommands}RalyTx`;
 export type RelayerCMDKey = EVMCMDKeys | SubstrateCMDKeys;
