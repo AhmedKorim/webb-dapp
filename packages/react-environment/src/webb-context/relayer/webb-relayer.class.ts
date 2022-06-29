@@ -335,15 +335,13 @@ class RelayedWithdraw {
 
   generateWithdrawRequest<T extends RelayedChainInput, C extends CMDSwitcher<T['baseOn']>>(
     chain: T,
-    proof: RelayerCMDs<T['baseOn'], C>['proof'],
-    args: WithdrawRelayerArgs<T['baseOn'], C>
+    payload: RelayerCMDs<T['baseOn'], C>
   ) {
     return {
       [chain.baseOn]: {
         [this.prefix]: {
           contract: chain.contractAddress,
-          proof,
-          ...args,
+          ...payload,
         },
       },
     };

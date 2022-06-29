@@ -1,7 +1,7 @@
 import { ChainId } from '@webb-dapp/apps/configs';
 // @ts-ignore
 import Worker from '@webb-dapp/mixer/utils/proving-manager.worker';
-import { RelayedWithdrawResult, WebbRelayer } from '@webb-dapp/react-environment';
+import { RelayedChainInput, RelayedWithdrawResult, WebbRelayer } from '@webb-dapp/react-environment';
 import { getCachedFixtureURI, withLocalFixtures } from '@webb-dapp/utils/misc';
 import { WebbError, WebbErrorCodes } from '@webb-dapp/utils/webb-error';
 import { transactionNotificationConfig } from '@webb-dapp/wallet/providers/polkadot/transaction-notification-config';
@@ -187,16 +187,17 @@ export class PolkadotMixerWithdraw extends MixerWithdraw<WebbPolkadot> {
         logger.info(`withdrawing through relayer`, activeRelayer);
         this.emit('stateChange', WithdrawState.SendingTransaction);
         const relayerMixerTx = await activeRelayer!.initWithdraw('mixerRelayTx');
-        const relayerWithdrawPayload = relayerMixerTx.generateWithdrawRequest(
+        const chainInfo: RelayedChainInput = {
+          baseOn: 'substrate',
+          contractAddress: '',
+          endpoint: '',
+          // TODO change this from the config
+          name: 'localnode',
+        };
+        const relayerWithdrawPayload = relayerMixerTx.generateWithdrawRequest<typeof chainInfo, 'mixerRelayTx'>(
+          chainInfo,
           {
-            baseOn: 'substrate',
-            contractAddress: '',
-            endpoint: '',
-            // TODO change this from the config
-            name: 'localnode',
-          },
-          Array.from(hexToU8a(withdrawProof.proofBytes)),
-          {
+            proof: Array.from(hexToU8a(withdrawProof.proofBytes)),
             chain: 'localnode',
             fee: withdrawProof.fee,
             nullifierHash: Array.from(hexToU8a(withdrawProof.nullifierHash)),

@@ -411,21 +411,18 @@ export class Web3BridgeWithdraw extends BridgeWithdraw<WebbWeb3Provider> {
         endpoint: '',
       };
 
-      const tx = relayedWithdraw.generateWithdrawRequest<typeof chainInfo, 'anchorRelayTx'>(
-        chainInfo,
-        `0x${proofBytes}`,
-        {
-          fee: bufferToFixed(zkp.input.fee),
-          nullifierHash: bufferToFixed(zkp.input.nullifierHash),
-          chain: chainInfo.name,
-          contract: chainInfo.contractAddress,
-          refreshCommitment: '0x0000000000000000000000000000000000000000000000000000000000000000',
-          recipient: zkp.input.recipient,
-          refund: bufferToFixed(zkp.input.refund),
-          relayer: zkp.input.relayer,
-          roots: relayerRoots,
-        }
-      );
+      const tx = relayedWithdraw.generateWithdrawRequest<typeof chainInfo, 'anchorRelayTx'>(chainInfo, {
+        proof: `0x${proofBytes}`,
+        fee: bufferToFixed(zkp.input.fee),
+        nullifierHash: bufferToFixed(zkp.input.nullifierHash),
+        chain: chainInfo.name,
+        contract: chainInfo.contractAddress,
+        refreshCommitment: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        recipient: zkp.input.recipient,
+        refund: bufferToFixed(zkp.input.refund),
+        relayer: zkp.input.relayer,
+        roots: relayerRoots,
+      });
       relayedWithdraw.watcher.subscribe(([nextValue, message]) => {
         switch (nextValue) {
           case RelayedWithdrawResult.PreFlight:
