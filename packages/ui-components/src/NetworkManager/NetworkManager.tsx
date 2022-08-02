@@ -125,10 +125,11 @@ export const NetworkManager: React.FC<NetworkManagerProps> = () => {
   };
   const handleCancel = useCallback(() => {
     setOpen(false);
-    if (connectionStep !== ConnectionStep.Connecting) {
+    if (connectionStep === ConnectionStep.Connecting) {
+      // TODO: cleanup the connection/request to the extension
       setUserSelectedChain(null);
-      setConnectionStep(ConnectionStep.SelectChain);
     }
+    setConnectionStep(ConnectionStep.SelectChain);
   }, [connectionStep]);
 
   useEffect(() => {
