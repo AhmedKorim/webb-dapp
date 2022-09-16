@@ -1,5 +1,6 @@
+import { Modal } from '@mui/material';
 import { useActiveKeys } from '@webb-dapp/page-statistics/provider/hooks';
-import { KeygenTable, KeyStatusCard } from '@webb-dapp/webb-ui-components';
+import { KeygenTable, KeyStatusCard, Tooltip } from '@webb-dapp/webb-ui-components';
 import { Spinner } from '@webb-dapp/webb-ui-components/icons';
 import React, { useMemo } from 'react';
 

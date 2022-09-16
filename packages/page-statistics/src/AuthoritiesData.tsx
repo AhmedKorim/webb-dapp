@@ -14,5 +14,5 @@ const AuthoritiesDataWrapper = styled.div`
 `;
 
 export const AuthoritiesData = () => {
-  return <AuthoritiesDataWrapper></AuthoritiesDataWrapper>;
+  return '';
 };
