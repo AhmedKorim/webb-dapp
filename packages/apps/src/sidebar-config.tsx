@@ -36,16 +36,6 @@ export const sideBarConfig: SidebarConfig = {
       icon: <CrowdloanPageLogo />,
     },
     {
-      name: 'Statistics',
-      icon: <StatisticsPageLogo />,
-      items: [
-        {
-          path: 'statistics/dkg',
-          name: 'DKG',
-        },
-      ],
-    },
-    {
       name: 'Governance',
       icon: <GovernancePageLogo />,
       items: [
