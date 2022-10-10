@@ -1,8 +1,10 @@
+// YourComponent.stories.ts|tsx
+
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { Chip } from '@webb-dapp/webb-ui-components/components';
+
 import '@webb-dapp/webb-ui-components/tailwind.css';
-import { twMerge } from 'tailwind-merge';
+import { Chip } from '@webb-dapp/webb-ui-components/src/components/Chip';
 
 //👇 This default export determines where your story goes in the story list
 export default {
@@ -14,11 +16,12 @@ export default {
   component: Chip,
 } as ComponentMeta<typeof Chip>;
 
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof Chip> = (args) => <Chip {...args}>Active </Chip>;
+//👇 We create a “template” of how args map to rendering
+const Template: ComponentStory<typeof Chip> = (args) => <Chip {...args} />;
 
-export const Color = Template.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-Color.args = {
-  color:'green',
+export const FirstStory = Template.bind({});
+
+FirstStory.args = {
+  color: 'green'  
+  /*👇 The args you need here will depend on your component */
 };

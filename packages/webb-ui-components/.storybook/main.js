@@ -1,8 +1,5 @@
-// your app's webpack.config.js
-const custom = require('../../apps/webpack.base');
+//const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
-const webbpack = custom();
-console.log("test \n",webbpack);
 
 module.exports = {
   "stories": [
@@ -18,14 +15,13 @@ module.exports = {
   "core": {
     "builder": "@storybook/builder-webpack5"
   },
-  webpackFinal: async (config) => {
-    return { ...config, module: { ...config.module, rules: webbpack.module.rules } };
-  },
-//   webpackFinal: async (config, { configType }) => {
-//     // `configType` has a value of 'DEVELOPMENT' or 'PRODUCTION'
-//     // You can change the configuration based on that.
-//     // 'PRODUCTION' is used when building the static version of storybook.
-
-//     // Make whatever fine-grained changes you need
-// };
+  // webpackFinal: async (config) => {
+  //   config.resolve.plugins = [
+  //     ...(config.resolve.plugins || []),
+  //     new TsconfigPathsPlugin({
+  //       extensions: config.resolve.extensions,
+  //     }),
+  //   ];
+  //   return config;
+  // },
 }

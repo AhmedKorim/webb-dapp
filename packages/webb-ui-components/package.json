@@ -42,7 +42,9 @@
     "react-table": "^7.8.0",
     "tailwind-merge": "^1.6.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "tsconfig-paths-webpack-plugin": "^4.0.0"
+  },
   "scripts": {
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook"
