@@ -216,7 +216,6 @@ function createWebpack(env, mode = 'production') {
             },
           ],
         },
-
         // svg react generator
         {
           test: /\.svg$/i,

@@ -2,9 +2,8 @@
 
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-
-import '@webb-dapp/webb-ui-components/tailwind.css';
 import { Chip } from '@webb-dapp/webb-ui-components/src/components/Chip';
+import '@webb-dapp/webb-ui-components/tailwind.css';
 
 //👇 This default export determines where your story goes in the story list
 export default {
@@ -22,6 +21,6 @@ const Template: ComponentStory<typeof Chip> = (args) => <Chip {...args}>Active</
 export const FirstStory = Template.bind({});
 
 FirstStory.args = {
-  color: 'green'  
+  color: 'green',
   /*👇 The args you need here will depend on your component */
 };
