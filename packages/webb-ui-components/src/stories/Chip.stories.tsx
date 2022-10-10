@@ -17,7 +17,7 @@ export default {
 } as ComponentMeta<typeof Chip>;
 
 //👇 We create a “template” of how args map to rendering
-const Template: ComponentStory<typeof Chip> = (args) => <Chip {...args} />;
+const Template: ComponentStory<typeof Chip> = (args) => <Chip {...args}>Active</Chip>;
 
 export const FirstStory = Template.bind({});
 
