@@ -156,7 +156,8 @@ export class PolkadotVAnchorDeposit extends VAnchorDeposit<
       const provingKey = await fetchSubstrateVAnchorProvingKey(2, abortSignal);
 
       // output note (Already generated)
-      const depositNote = depositPayload.note;
+      const { note } = depositPayload.note;
+      const publicAmount = note.amount;
 
       // Add the note to the noteManager before transaction is sent.
       // This helps to safeguard the user.
@@ -164,21 +165,22 @@ export class PolkadotVAnchorDeposit extends VAnchorDeposit<
         await this.inner.noteManager.addNote(depositPayload.note);
       }
 
-      const { note } = depositNote;
-
       // VAnchor tree id
       const treeId = depositPayload.params[0];
       const targetChainId = note.targetChainId;
       // Output utxos
-      const output1 = new Utxo(note.getUtxo());
+      const output1 = await Utxo.generateUtxo({
+        backend: 'Arkworks',
+        curve: 'Bn254',
+        chainId: targetChainId,
+        amount: note.amount,
+      });
       const output2 = await Utxo.generateUtxo({
         backend: 'Arkworks',
         curve: 'Bn254',
         chainId: targetChainId,
         amount: '0',
       });
-      const publicAmount = note.amount;
-      const inputNote = await depositPayload.note.getDefaultUtxoNote();
 
       this.cancelToken.throwIfCancel();
       this.emit('stateChange', TransactionState.FetchingLeaves);
@@ -221,13 +223,8 @@ export class PolkadotVAnchorDeposit extends VAnchorDeposit<
         relayer: relayerAccountDecoded,
         roots: rootsSet,
         chainId: note.targetChainId,
-        inputUtxos: [new Utxo(inputNote.note.getUtxo())],
-        leafIds: [
-          {
-            index: 0,
-            typedChainId: Number(note.targetChainId),
-          },
-        ],
+        inputUtxos: [],
+        leafIds: [],
         publicAmount,
         output: [output1, output2],
         refund: String(refund),
@@ -262,9 +259,7 @@ export class PolkadotVAnchorDeposit extends VAnchorDeposit<
       };
 
       this.emit('stateChange', TransactionState.SendingTransaction);
-      // Store the next leaf index before insertion
-      const leafsCount = await getLeafCount(this.inner.api, treeId);
-      const predictedIndex = leafsCount;
+
       let tx;
       if (wrapAndDepositFlow) {
         const governedToken =
@@ -310,22 +305,29 @@ export class PolkadotVAnchorDeposit extends VAnchorDeposit<
         );
       }
 
+      // predict the index for optimization
+      const leafsCount = await getLeafCount(this.inner.api, treeId);
+      const predictedIndex = leafsCount;
+
+      // Send the transaction
       this.cancelToken.throwIfCancel();
       const txHash = await tx.call(account.address);
-
-      const insertedLeaf = depositNote.getLeaf();
+      
+      // Find the actual index
+      const insertedLeaf = note.getLeafCommitment();
       const leafIndex = await this.getleafIndex(
         insertedLeaf,
         predictedIndex,
         treeId
       );
-      // Update the leaf index
-      depositNote.mutateIndex(String(leafIndex));
+
+      // Update the leaf index in the note
+      depositPayload.note.mutateIndex(leafIndex.toString());
 
       this.emit('stateChange', TransactionState.Done);
       return {
         txHash,
-        outputNotes: [depositNote],
+        outputNotes: [depositPayload.note],
       };
     } catch (e) {
       if (

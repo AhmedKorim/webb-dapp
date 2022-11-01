@@ -163,7 +163,7 @@ export class PolkadotVAnchorWithdraw extends VAnchorWithdraw<WebbPolkadot> {
       0,
       inputLeafIndex
     );
-    const leavesMap: any = {};
+    const leavesMap: Record<string, Uint8Array[]> = {};
     /// Assume same chain withdraw-deposit
     leavesMap[targetChainId] = leaves;
     // Get the root from local merkle tree build

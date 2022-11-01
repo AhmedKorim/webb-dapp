@@ -703,7 +703,7 @@ export class VAnchorContract {
 
       const inputNote = await Note.generateNote(noteInput);
       inputNotes.push(inputNote);
-      inputIndices.push(inputUtxo.index!);
+      inputIndices.push(inputUtxo.index);
     }
 
     const encryptedCommitments: [Uint8Array, Uint8Array] = [
