@@ -11,13 +11,21 @@ import {
   Button,
   fuzzyFilter,
   KeyValueWithButton,
-  TokenPair,
   Typography,
   Table,
   shortenString,
+  TokenWithAmount,
 } from '@webb-tools/webb-ui-components';
 import { SpendNoteDataType } from './types';
 import { randRecentDate } from '@ngneat/falso';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useWebContext } from '@webb-tools/api-provider-environment';
+import { calculateTypedChainId, ChainType, parseTypedChainId } from '@webb-tools/sdk-core';
+import { ethers } from 'ethers';
+import { Web3Provider } from '@webb-tools/web3-api-provider';
+import { chainsPopulated, currenciesConfig } from '@webb-tools/dapp-config';
+import { VAnchorContract } from '@webb-tools/evm-contracts';
+import { useNoteAccount } from '@webb-tools/react-hooks';
 
 const columnHelper = createColumnHelper<SpendNoteDataType>();
 
@@ -27,16 +35,15 @@ const columns: ColumnDef<SpendNoteDataType, any>[] = [
     cell: (props) => <TokenIcon size="lg" name={props.getValue<string>()} />,
   }),
 
-  columnHelper.accessor('token1Symbol', {
+  columnHelper.accessor('governedTokenSymbol', {
     header: 'Shielded Asset',
     cell: (props) => {
       const token1Symbol = props.getValue<string>();
-      const token2Symbol = props.row.original.token2Symbol;
       const tokenUrl = props.row.original.assetsUrl;
 
       return (
         <div className="flex items-center space-x-1.5">
-          <TokenPair token1Symbol={token1Symbol} token2Symbol={token2Symbol} />
+          <TokenWithAmount token1Symbol={token1Symbol} />
 
           <a href={tokenUrl} target="_blank" rel="noopener noreferrer">
             <ExternalLinkLine />
@@ -98,8 +105,7 @@ const assetsUrl = 'https://webb.tools';
 const data: SpendNoteDataType[] = [
   {
     chain: 'matic',
-    token1Symbol: 'WebbETH',
-    token2Symbol: 'WETH',
+    governedTokenSymbol: 'WebbETH',
     assetsUrl,
     createdTime: randRecentDate(),
     subsequentDeposits: 0,
@@ -108,8 +114,7 @@ const data: SpendNoteDataType[] = [
   },
   {
     chain: 'matic',
-    token1Symbol: 'WebbETH',
-    token2Symbol: 'WETH',
+    governedTokenSymbol: 'WebbETH',
     assetsUrl,
     createdTime: randRecentDate(),
     subsequentDeposits: 8,
@@ -118,8 +123,7 @@ const data: SpendNoteDataType[] = [
   },
   {
     chain: 'matic',
-    token1Symbol: 'WebbUSDC',
-    token2Symbol: 'USDT',
+    governedTokenSymbol: 'WebbUSDC',
     assetsUrl,
     createdTime: randRecentDate(),
     subsequentDeposits: 88,
@@ -128,9 +132,98 @@ const data: SpendNoteDataType[] = [
   },
 ];
 
-export const SpendNotesTableContainer = () => {
+export const SpendNotesTableContainer: React.FC = () => {
+  const { noteManager } = useWebContext();
+  const { allNotes } = useNoteAccount();
+
+  const [notes, setTableNotes] = useState<SpendNoteDataType[]>([]);
+
+  const getBalancesForChain = useCallback(
+    (typedChainId: string): Map<string, number> => {
+      const chainBalances: Map<string, number> = new Map();
+      const chainGroupedNotes = allNotes.get(typedChainId);
+
+      if (!chainGroupedNotes) {
+        return new Map();
+      }
+
+      chainGroupedNotes.forEach((note) => {
+        const assetBalance = chainBalances.get(note.note.tokenSymbol);
+        if (!assetBalance) {
+          chainBalances.set(
+            note.note.tokenSymbol,
+            Number(ethers.utils.formatUnits(note.note.amount, note.note.denomination))
+          );
+        } else {
+          chainBalances.set(
+            note.note.tokenSymbol,
+            assetBalance + Number(ethers.utils.formatUnits(note.note.amount, note.note.denomination))
+          );
+        }
+      });
+
+      return chainBalances;
+    },
+    [allNotes]
+  );
+
+  useEffect(() => {
+    if (noteManager) {
+      console.group('Debug')
+      // Build up all providers that are required for chain queries
+      const providersToQuerySubsequentDeposits = Array.from(allNotes.entries()).reduce((acc, entry) => {
+        const detectedChainTypeId = parseTypedChainId(Number(entry[0]));
+
+        console.log('detectedChainTypeId', detectedChainTypeId)
+
+        // Map over the notes in the entry and create a provider for the sourceChainId if it doesn't exist
+        entry[1].forEach((note) => {
+          if (!acc[(note.note.sourceChainId)]) {
+            acc[note.note.sourceChainId] =
+              Web3Provider.fromUri(chainsPopulated[Number(note.note.sourceChainId)].url).intoEthersProvider();
+          }
+        })
+        
+        return acc;
+      }, {} as Record<string, ethers.providers.Web3Provider>)
+      console.groupEnd()
+
+      Array.from(allNotes.entries()).forEach((chainGroupedNotes) => {
+        const promises: Promise<SpendNoteDataType>[] = chainGroupedNotes[1].map(async (note) => {
+          // For each note, look at the sourceChain and create the contract instance
+          const address = note.note.sourceIdentifyingData;
+          const typedChainId = note.note.sourceChainId;
+          const contract = new VAnchorContract(providersToQuerySubsequentDeposits[typedChainId], address, true);
+
+          // Get the information about the chain
+          const chain = chainsPopulated[Number(chainGroupedNotes[0])];
+          const chainGroupedBalances = getBalancesForChain(chainGroupedNotes[0]);
+
+          if (!notes.find((storedNote) => {
+            return storedNote.note === note.serialize();
+          })) {
+            return contract.getNextIndex().then((nextIndex) => {
+              const subsequentDepositsNumber = nextIndex - Number(note.note.index);
+              return {
+                governedTokenSymbol: note.note.tokenSymbol,
+                chain: chain.name.toLowerCase(),
+                note: note.serialize(),
+                assetsUrl,
+                createdTime: randRecentDate(),
+                balance: chainGroupedBalances.get(note.note.tokenSymbol) ?? 0,
+                subsequentDeposits: subsequentDepositsNumber
+              }
+            });  
+          }
+        })
+
+        Promise.all(promises).then()
+      })
+    }
+  }, [allNotes, getBalancesForChain, noteManager])
+
   const table = useReactTable({
-    data,
+    data: notes,
     columns,
     getCoreRowModel: getCoreRowModel(),
     filterFns: {
@@ -145,7 +238,7 @@ export const SpendNotesTableContainer = () => {
         tdClassName="min-w-max"
         tableProps={table as RTTable<unknown>}
         isPaginated
-        totalRecords={data.length}
+        totalRecords={notes.length}
       />
     </div>
   );

@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "main": "./src/index.js",
   "dependencies": {
+    "@webb-tools/dapp-config": "0.0,1",
     "@webb-tools/browser-utils": "0.0.1",
     "@webb-tools/storage": "0.0.1"
   }

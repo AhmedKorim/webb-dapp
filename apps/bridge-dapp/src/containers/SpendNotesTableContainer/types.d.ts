@@ -7,14 +7,9 @@ export interface SpendNoteDataType {
   chain: string;
 
   /**
-   * The first token symbol for displaying
+   * Symbol of the governed (webb<xxx>) asset
    */
-  token1Symbol: string;
-
-  /**
-   * The second token symbol for displaying
-   */
-  token2Symbol: string;
+  governedTokenSymbol: string;
 
   /**
    * The external url of assets pair

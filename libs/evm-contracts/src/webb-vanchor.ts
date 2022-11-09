@@ -107,7 +107,7 @@ export const generateCircomCommitment = (note: JsNote): string => {
 // The AnchorContract defines useful functions over an anchor that do not depend on zero knowledge.
 export class VAnchorContract {
   public _contract: VAnchor;
-  private readonly signer: Signer;
+  private readonly signer: Signer | undefined;
 
   constructor(
     private web3Provider: providers.Web3Provider,
@@ -154,7 +154,7 @@ export class VAnchorContract {
 
   async getWebbToken(): Promise<ERC20> {
     const tokenAddress = await this._contract.token();
-    const tokenInstance = ERC20Factory.connect(tokenAddress, this.signer);
+    const tokenInstance = ERC20Factory.connect(tokenAddress, this.web3Provider);
 
     return tokenInstance;
   }
