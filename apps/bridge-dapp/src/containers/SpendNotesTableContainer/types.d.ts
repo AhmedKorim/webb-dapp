@@ -27,9 +27,9 @@ export interface SpendNoteDataType {
   createdTime: Date;
 
   /**
-   * Subsepent deposits
+   * Subsequent deposits
    */
-  subsequentDeposits: number;
+  subsequentDeposits: string;
 
   /**
    * The actual note

@@ -108,7 +108,7 @@ const data: SpendNoteDataType[] = [
     governedTokenSymbol: 'WebbETH',
     assetsUrl,
     createdTime: randRecentDate(),
-    subsequentDeposits: 0,
+    subsequentDeposits: '0',
     note: 'webb://v1:vanchor/1099511628196:1099511628196/0xc3393b00a5c6a7250a5ee7ef99f0a06ff29bc18f:0xc3393b00a5c6a7250a5ee7ef99f0a06ff29bc18f/00000100000001a4:00000000000000000de0b6b3a7640000:215beaaaf3c9789e7fceda50314e2c2448c0faa12d0a0f15bf1ba20bea484cda:002b9d68d5bdddf2f16fdaa209a1947ff9430a644381576a70ffe39309f736d7/?curve=Bn254&width=5&exp=5&hf=Poseidon&backend=Circom&token=webbETH&denom=18&amount=1000000000000000000',
     balance: 0.654,
   },
@@ -117,7 +117,7 @@ const data: SpendNoteDataType[] = [
     governedTokenSymbol: 'WebbETH',
     assetsUrl,
     createdTime: randRecentDate(),
-    subsequentDeposits: 8,
+    subsequentDeposits: '8',
     note: 'webb://v1:vanchor/1099511628196:1099511628196/0xc3393b00a5c6a7250a5ee7ef99f0a06ff29bc18f:0xc3393b00a5c6a7250a5ee7ef99f0a06ff29bc18f/00000100000001a4:00000000000000000de0b6b3a7640000:215beaaaf3c9789e7fceda50314e2c2448c0faa12d0a0f15bf1ba20bea484cda:002b9d68d5bdddf2f16fdaa209a1947ff9430a644381576a70ffe39309f736d7/?curve=Bn254&width=5&exp=5&hf=Poseidon&backend=Circom&token=webbETH&denom=18&amount=1000000000000000000',
     balance: 0.22,
   },
@@ -126,7 +126,7 @@ const data: SpendNoteDataType[] = [
     governedTokenSymbol: 'WebbUSDC',
     assetsUrl,
     createdTime: randRecentDate(),
-    subsequentDeposits: 88,
+    subsequentDeposits: '88',
     note: 'webb://v1:vanchor/1099511628196:1099511628196/0xc3393b00a5c6a7250a5ee7ef99f0a06ff29bc18f:0xc3393b00a5c6a7250a5ee7ef99f0a06ff29bc18f/00000100000001a4:00000000000000000de0b6b3a7640000:215beaaaf3c9789e7fceda50314e2c2448c0faa12d0a0f15bf1ba20bea484cda:002b9d68d5bdddf2f16fdaa209a1947ff9430a644381576a70ffe39309f736d7/?curve=Bn254&width=5&exp=5&hf=Poseidon&backend=Circom&token=webbETH&denom=18&amount=1000000000000000000',
     balance: 500,
   },
@@ -169,55 +169,39 @@ export const SpendNotesTableContainer: React.FC = () => {
 
   useEffect(() => {
     if (noteManager) {
-      console.group('Debug')
-      // Build up all providers that are required for chain queries
-      const providersToQuerySubsequentDeposits = Array.from(allNotes.entries()).reduce((acc, entry) => {
-        const detectedChainTypeId = parseTypedChainId(Number(entry[0]));
-
-        console.log('detectedChainTypeId', detectedChainTypeId)
-
-        // Map over the notes in the entry and create a provider for the sourceChainId if it doesn't exist
-        entry[1].forEach((note) => {
-          if (!acc[(note.note.sourceChainId)]) {
-            acc[note.note.sourceChainId] =
-              Web3Provider.fromUri(chainsPopulated[Number(note.note.sourceChainId)].url).intoEthersProvider();
-          }
-        })
-        
-        return acc;
-      }, {} as Record<string, ethers.providers.Web3Provider>)
-      console.groupEnd()
+      const spendNoteChainData: Promise<SpendNoteDataType>[] = [];
 
       Array.from(allNotes.entries()).forEach((chainGroupedNotes) => {
-        const promises: Promise<SpendNoteDataType>[] = chainGroupedNotes[1].map(async (note) => {
+        chainGroupedNotes[1].forEach(async (note) => {
           // For each note, look at the sourceChain and create the contract instance
           const address = note.note.sourceIdentifyingData;
-          const typedChainId = note.note.sourceChainId;
-          const contract = new VAnchorContract(providersToQuerySubsequentDeposits[typedChainId], address, true);
+          const typedChainId = Number(note.note.sourceChainId);
+          const provider = Web3Provider.fromUri(chainsPopulated[typedChainId].url).intoEthersProvider();
+          const contract = new VAnchorContract(provider, address, true);
 
           // Get the information about the chain
           const chain = chainsPopulated[Number(chainGroupedNotes[0])];
           const chainGroupedBalances = getBalancesForChain(chainGroupedNotes[0]);
 
-          if (!notes.find((storedNote) => {
-            return storedNote.note === note.serialize();
-          })) {
-            return contract.getNextIndex().then((nextIndex) => {
-              const subsequentDepositsNumber = nextIndex - Number(note.note.index);
-              return {
-                governedTokenSymbol: note.note.tokenSymbol,
-                chain: chain.name.toLowerCase(),
-                note: note.serialize(),
-                assetsUrl,
-                createdTime: randRecentDate(),
-                balance: chainGroupedBalances.get(note.note.tokenSymbol) ?? 0,
-                subsequentDeposits: subsequentDepositsNumber
-              }
-            });  
-          }
+          spendNoteChainData.push(contract.getNextIndex().then((nextIndex) => {
+            console.log('note: ', note);
+            console.log('noteIndex: ', note.note.index);
+            const subsequentDepositsNumber = nextIndex - Number(note.note.index);
+            return {
+              governedTokenSymbol: note.note.tokenSymbol,
+              chain: chain.name.toLowerCase(),
+              note: note.serialize(),
+              assetsUrl,
+              createdTime: randRecentDate(),
+              balance: Number(ethers.utils.formatUnits(note.note.amount, note.note.denomination)),
+              subsequentDeposits: note.note.index ? subsequentDepositsNumber.toString() : '?'
+            };
+          }));
         })
+      })
 
-        Promise.all(promises).then()
+      Promise.all(spendNoteChainData).then((tableData) => {
+        setTableNotes(tableData);
       })
     }
   }, [allNotes, getBalancesForChain, noteManager])

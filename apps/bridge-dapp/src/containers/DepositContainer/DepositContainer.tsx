@@ -115,7 +115,7 @@ export const DepositContainer = forwardRef<
 
     return {
       symbol: activeApi.state.activeBridge.currency.view.symbol,
-      balance: selectedTokenBalance,
+      balance: selectedTokenBalance ?? undefined,
     };
   }, [activeApi, selectedTokenBalance]);
 
@@ -150,7 +150,9 @@ export const DepositContainer = forwardRef<
       const selectedToken = Object.values(governedCurrencies).find(
         (token) => token.view.symbol === newToken.symbol
       );
-      setGovernedCurrency(selectedToken);
+      if (selectedToken) {
+        setGovernedCurrency(selectedToken);
+      }
     },
     [governedCurrencies, setGovernedCurrency]
   );
@@ -167,16 +169,18 @@ export const DepositContainer = forwardRef<
             (val) => val.name === selectedChain.name
           );
 
-          const sourceChains: ChainType[] = Object.values(chains).map((val) => {
-            return {
-              name: val.name,
-              symbol: currenciesConfig[val.nativeCurrencyId].symbol,
-            };
-          });
-
-          setMainComponent(
-            <WalletModal chain={chain} sourceChains={sourceChains} />
-          );
+          if (chain) {
+            const sourceChains: ChainType[] = Object.values(chains).map((val) => {
+              return {
+                name: val.name,
+                symbol: currenciesConfig[val.nativeCurrencyId].symbol,
+              };
+            });
+  
+            setMainComponent(
+              <WalletModal chain={chain} sourceChains={sourceChains} />
+            );
+          }
         }}
         onClose={() => setMainComponent(undefined)}
       />
@@ -184,7 +188,7 @@ export const DepositContainer = forwardRef<
   }, [chains, setMainComponent, sourceChainInputValue, sourceChains]);
 
   const onMaxBtnClick = useCallback(() => {
-    setAmount(selectedTokenBalance);
+    setAmount(selectedTokenBalance ?? 0);
   }, [selectedTokenBalance]);
 
   return (
@@ -248,7 +252,7 @@ export const DepositContainer = forwardRef<
         }}
         buttonProps={{
           onClick: async () => {
-            if (sourceChain && destChain && selectedToken && amount !== 0) {
+            if (sourceChain && destChain && selectedToken && activeApi && activeApi.state.activeBridge && amount !== 0) {
               setIsGeneratingNote(true);
               const newDepositPayload = await generateNote(
                 activeApi.state.activeBridge.targets[

@@ -4,8 +4,20 @@ import React, { createContext, useMemo, useState } from 'react';
 import { WebbUIErrorBoudary } from '../containers/WebbUIErrorBoudary';
 import { useDarkMode } from '../hooks/useDarkMode';
 import { IWebbUIContext, WebbUIProviderProps } from './types';
-
-export const WebbUIContext = createContext<null | IWebbUIContext>(null);
+// theme: {
+//   isDarkMode: boolean;
+//   toggleThemeMode: ToggleThemeModeFunc;
+// };
+// customMainComponent: React.ReactElement | undefined;
+// setMainComponent: (component: React.ReactElement) => void;
+export const WebbUIContext = createContext<IWebbUIContext>({
+  theme: {
+    isDarkMode: false,
+    toggleThemeMode: () => {},
+  },
+  customMainComponent: undefined,
+  setMainComponent: () => {},
+});
 
 const appLogger = LoggerService.new('Stats App');
 
