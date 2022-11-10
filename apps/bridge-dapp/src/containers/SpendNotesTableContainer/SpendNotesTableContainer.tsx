@@ -16,8 +16,8 @@ import {
   Typography,
 } from '@webb-tools/webb-ui-components';
 import { formatDistanceToNow } from 'date-fns';
+import { FC } from 'react';
 import { EmptyTable } from '../../components/tables';
-import { useSpendNotes } from '../../hooks';
 import { SpendNoteDataType } from './types';
 
 const columnHelper = createColumnHelper<SpendNoteDataType>();
@@ -93,9 +93,9 @@ const columns: ColumnDef<SpendNoteDataType, any>[] = [
   }),
 ];
 
-export const SpendNotesTableContainer = () => {
-  const data = useSpendNotes();
-
+export const SpendNotesTableContainer: FC<{ data: SpendNoteDataType[] }> = ({
+  data,
+}) => {
   const table = useReactTable({
     data,
     columns,

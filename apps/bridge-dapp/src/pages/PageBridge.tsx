@@ -28,6 +28,7 @@ import {
 import { DepositContainer } from '../containers/DepositContainer';
 import { TransferContainer } from '../containers/TransferContainer';
 import { WithdrawContainer } from '../containers/WithdrawContainer';
+import { useShieldedAssets, useSpendNotes } from '../hooks';
 import { getMessageFromTransactionState } from '../utils';
 
 const defaultTx: Partial<TransactionPayload> = {
@@ -47,6 +48,10 @@ const PageBridge = () => {
   const { customMainComponent } = useWebbUI();
   const { stage } = useBridgeDeposit();
 
+  // Account data hooks
+  const shieldedAssetsTableData = useShieldedAssets();
+  const spendNotesTableData = useSpendNotes();
+
   const [txPayload, setTxPayload] = useState(defaultTx);
 
   useEffect(() => {
@@ -57,6 +62,7 @@ const PageBridge = () => {
         ...prev,
         txStatus: {
           ...prev.txStatus,
+          status: 'in-progress',
           message: `${message}...`,
         },
       }));
@@ -212,10 +218,10 @@ const PageBridge = () => {
         </div>
 
         <TabContent value="shielded-assets">
-          <ShieldedAssetsTableContainer />
+          <ShieldedAssetsTableContainer data={shieldedAssetsTableData} />
         </TabContent>
         <TabContent value="available-spend-notes">
-          <SpendNotesTableContainer />
+          <SpendNotesTableContainer data={spendNotesTableData} />
         </TabContent>
       </TabsRoot>
 

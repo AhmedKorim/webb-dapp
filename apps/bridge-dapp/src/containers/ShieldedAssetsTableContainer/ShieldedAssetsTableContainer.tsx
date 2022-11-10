@@ -19,8 +19,8 @@ import {
   TokenPair,
   Typography,
 } from '@webb-tools/webb-ui-components';
+import { FC } from 'react';
 import { EmptyTable } from '../../components/tables';
-import { useShieldedAssets } from '../../hooks';
 import { ShieldedAssetDataType } from './types';
 
 const columnHelper = createColumnHelper<ShieldedAssetDataType>();
@@ -94,9 +94,9 @@ const columns: ColumnDef<ShieldedAssetDataType, any>[] = [
   }),
 ];
 
-export const ShieldedAssetsTableContainer = () => {
-  const data = useShieldedAssets();
-
+export const ShieldedAssetsTableContainer: FC<{
+  data: ShieldedAssetDataType[];
+}> = ({ data }) => {
   const table = useReactTable({
     data,
     columns,
