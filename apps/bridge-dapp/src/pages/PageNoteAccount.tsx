@@ -3,7 +3,7 @@ import { Web3Provider } from '@webb-tools/web3-api-provider';
 import { chainsConfig } from '@webb-tools/dapp-config';
 import { useWebContext } from '@webb-tools/api-provider-environment';
 import { useCurrencies, useDepositNote, useNoteAccount } from '@webb-tools/react-hooks';
-import { getRoundedAmountString, Input, TokenInput, Typography } from '@webb-tools/webb-ui-components';
+import { Button, getRoundedAmountString, Input, TokenInput, Typography } from '@webb-tools/webb-ui-components';
 import { calculateTypedChainId, Keypair, Note } from '@webb-tools/sdk-core';
 import { ethers } from 'ethers';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -252,6 +252,7 @@ const ConnectedNoteAccountView: React.FC = () => {
       <div>
         <div className='account-details'>
           <Typography variant='h4'>Public Key: {noteManager.getKeypair().toString()}</Typography>
+          <Button onClick={syncNotes}>Sync Notes</Button>
         </div>
         <Typography variant='h3'>Total Asset Balances:</Typography>
         <div className='cumulative-asset-balances' style={{ display: 'flex', justifyContent: 'space-around' }}>
