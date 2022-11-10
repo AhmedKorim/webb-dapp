@@ -19,6 +19,8 @@ import {
   TokenPair,
   Typography,
 } from '@webb-tools/webb-ui-components';
+import { EmptyTable } from '../../components/tables';
+import { useShieldedAssets } from '../../hooks';
 import { ShieldedAssetDataType } from './types';
 
 const columnHelper = createColumnHelper<ShieldedAssetDataType>();
@@ -92,51 +94,9 @@ const columns: ColumnDef<ShieldedAssetDataType, any>[] = [
   }),
 ];
 
-// Temporary hardcoded data for table displaying
-const data: ShieldedAssetDataType[] = [
-  {
-    chain: 'matic',
-    token1Symbol: 'WebbETH',
-    token2Symbol: 'WETH',
-    assetsUrl: 'https://webb.tools',
-    availableBalance: 1.645,
-    numberOfNotesFound: 6,
-  },
-  {
-    chain: 'matic',
-    token1Symbol: 'WebbUSDC',
-    token2Symbol: 'USDT',
-    assetsUrl: 'https://webb.tools',
-    availableBalance: 1500.0,
-    numberOfNotesFound: 3,
-  },
-  {
-    chain: 'matic',
-    token1Symbol: 'WebbUSDC',
-    token2Symbol: 'DAI',
-    assetsUrl: 'https://webb.tools',
-    availableBalance: 1433.12,
-    numberOfNotesFound: 3,
-  },
-  {
-    chain: 'op',
-    token1Symbol: 'WebbETH',
-    token2Symbol: 'WETH',
-    assetsUrl: 'https://webb.tools',
-    availableBalance: 12.12,
-    numberOfNotesFound: 2,
-  },
-  {
-    chain: 'op',
-    token1Symbol: 'WebbUSDC',
-    token2Symbol: 'USDT',
-    assetsUrl: 'https://webb.tools',
-    availableBalance: 1234.12,
-    numberOfNotesFound: 2,
-  },
-];
-
 export const ShieldedAssetsTableContainer = () => {
+  const data = useShieldedAssets();
+
   const table = useReactTable({
     data,
     columns,
@@ -145,6 +105,16 @@ export const ShieldedAssetsTableContainer = () => {
       fuzzy: fuzzyFilter,
     },
   });
+
+  if (!data.length) {
+    return (
+      <EmptyTable
+        title="No assets found"
+        description="Don't see your assets?"
+        buttonText="Upload spend Notes"
+      />
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-lg bg-mono-0 dark:bg-mono-180">
