@@ -473,7 +473,34 @@ export class Web3VAnchorWithdraw extends VAnchorWithdraw<WebbWeb3Provider> {
           } else {
             options = {};
           }
-
+          logger.info(`Transact sending`, [
+            publicInputs.proof,
+            ZERO_BYTES32,
+            {
+              recipient: extData.recipient,
+              extAmount: extData.extAmount,
+              relayer: extData.relayer,
+              fee: extData.fee,
+              refund: extData.refund,
+              token: extData.token,
+            },
+            {
+              roots: publicInputs.roots,
+              extensionRoots: '0x',
+              inputNullifiers: publicInputs.inputNullifiers,
+              outputCommitments: [
+                publicInputs.outputCommitments[0],
+                publicInputs.outputCommitments[1],
+              ],
+              publicAmount: publicInputs.publicAmount,
+              extDataHash: publicInputs.extDataHash,
+            },
+            {
+              encryptedOutput1: extData.encryptedOutput1,
+              encryptedOutput2: extData.encryptedOutput2,
+            },
+            options,
+          ]);
           const tx = await destVAnchor.inner.transact(
             publicInputs.proof,
             ZERO_BYTES32,
@@ -541,15 +568,28 @@ export class Web3VAnchorWithdraw extends VAnchorWithdraw<WebbWeb3Provider> {
     treeHeight: number,
     abortSignal: AbortSignal
   ): Promise<{ leafIndex: number; utxo: Utxo; amount: BigNumber }> {
+    logger.trace(`fetchNoteLeaves`, {
+      note,
+      leavesMap,
+      destVAnchor,
+      treeHeight,
+    });
     const parsedNote = (await Note.deserialize(note)).note;
     const amount = BigNumber.from(parsedNote.amount);
 
     // fetch leaves if we don't have them
     if (leavesMap[parsedNote.sourceChainId] === undefined) {
+      logger.trace(
+        `Fetch leaves form another provider chin ${parsedNote.sourceChainId}`
+      );
       // Set up a provider for the source chain
       const sourceAddress = parsedNote.sourceIdentifyingData;
       const sourceChainConfig =
         this.config.chains[Number(parsedNote.sourceChainId)];
+      logger.trace(
+        `Fetching laves cross chain Source Chain config`,
+        sourceChainConfig
+      );
       const sourceHttpProvider = Web3Provider.fromUri(sourceChainConfig.url);
       const sourceEthers = sourceHttpProvider.intoEthersProvider();
       const sourceVAnchor = this.inner.getVariableAnchorByAddressAndProvider(
@@ -564,7 +604,7 @@ export class Web3VAnchorWithdraw extends VAnchorWithdraw<WebbWeb3Provider> {
         leafStorage,
         abortSignal
       );
-      console.log('leaves', leaves);
+      logger.trace(`Fetched leaves from source Anchor`, leaves);
       leavesMap[parsedNote.sourceChainId] = leaves.map((leaf) => {
         return hexToU8a(leaf);
       });
@@ -580,8 +620,18 @@ export class Web3VAnchorWithdraw extends VAnchorWithdraw<WebbWeb3Provider> {
       const edgeIndex = await destVAnchor.inner.edgeIndex(
         parsedNote.sourceChainId
       );
-      const edge = await destVAnchor.inner.edgeList(edgeIndex);
-      destHistorySourceRoot = edge[1].toHexString();
+      logger.trace(
+        `Cross chain Edge index for source Chain ${parsedNote.sourceChainId}`,
+        edgeIndex
+      );
+      try {
+        const edge = await destVAnchor.inner.edgeList(edgeIndex);
+        destHistorySourceRoot = edge[1].toHexString();
+        logger.trace(`Dest history source root`, edgeIndex);
+      } catch (e) {
+        console.log(e, 'failed to get edge');
+        throw e;
+      }
     }
 
     // Remove leaves from the leaves map which have not yet been relayed
