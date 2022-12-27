@@ -58,7 +58,8 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { Web3Provider } from '../ext-provider';
 import { TokenWrapper__factory } from '@webb-tools/contracts';
 import { ZERO_BYTES32 } from '@webb-tools/utils';
-
+import { LoggerService } from '@webb-tools/browser-utils';
+const logger = LoggerService.get('VAnchorWithdraw');
 export class Web3VAnchorWithdraw extends VAnchorWithdraw<WebbWeb3Provider> {
   protected get bridgeApi() {
     return this.inner.methods.bridgeApi as BridgeApi<WebbWeb3Provider>;
