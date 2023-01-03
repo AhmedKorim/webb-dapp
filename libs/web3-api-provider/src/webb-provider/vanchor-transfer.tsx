@@ -53,9 +53,9 @@ export class Web3VAnchorTransfer extends VAnchorTransfer<WebbWeb3Provider> {
     return this.inner.config;
   }
 
-  transfer(
+  async transfer(
     transferData: VanchorTransferPayload
-  ): Transaction<NewNotesTxResult> {
+  ): Promise<Transaction<NewNotesTxResult>> {
     const { amount } = transferData;
     const note = transferData.inputNotes[0];
     if (!note) {

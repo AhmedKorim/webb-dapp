@@ -6,7 +6,7 @@ import type { WebbApiProvider } from '../webb-provider.interface';
 import { EventBus } from '@webb-tools/app-util';
 
 import { Note } from '@webb-tools/sdk-core';
-import { NewNotesTxResult } from '..';
+import { NewNotesTxResult, Transaction } from '..';
 import { CancellationToken } from '../cancelation-token';
 import { TransactionState, WebbWithdrawEvents } from '../transaction';
 import { Chain } from '@webb-tools/dapp-config';
@@ -56,5 +56,5 @@ export abstract class VAnchorTransfer<
    */
   abstract transfer(
     transferData: VanchorTransferPayload
-  ): PromiseLike<NewNotesTxResult>;
+  ): PromiseLike<Transaction<NewNotesTxResult>>;
 }

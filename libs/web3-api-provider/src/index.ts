@@ -8,6 +8,7 @@ export * from './webb-provider/mixer-withdraw';
 export * from './webb-provider/relayer-manager';
 export * from './webb-provider/vanchor-deposit';
 export * from './webb-provider/vanchor-transfer';
+export * from './webb-provider/vanchor-transact';
 export * from './webb-provider';
 export * from './webb-provider/wrap-unwrap';
 export * from './ext-provider';
